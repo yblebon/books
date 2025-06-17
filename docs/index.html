@@ -49,21 +49,36 @@
         .extrait {
             font-style: italic;
         }
-        .card-link {
+        .details-link, .share-x-link {
             display: inline-block;
             margin-top: 10px;
             padding: 8px 12px;
-            background-color: #2c3e50;
-            color: white;
             text-decoration: none;
             border-radius: 4px;
+            font-size: 0.9em;
+            margin-right: 10px;
         }
-        .card-link:hover {
+        .details-link {
+            background-color: #2c3e50;
+            color: white;
+        }
+        .details-link:hover {
             background-color: #34495e;
+        }
+        .share-x-link {
+            background-color: #1DA1F2;
+            color: white;
+        }
+        .share-x-link:hover {
+            background-color: #1a91da;
         }
         .error {
             color: red;
             text-align: center;
+        }
+        .single-card {
+            max-width: 600px;
+            margin: 0 auto;
         }
     </style>
 </head>
@@ -89,76 +104,128 @@
                     throw new Error('Data is not an array');
                 }
 
+                // Generate unique IDs based on date
+                const dateCounts = {};
+                const booksWithIds = data.map(book => {
+                    let id = book.date ? book.date.replace(/[^a-zA-Z0-9]/g, '') : 'nodate';
+                    if (dateCounts[id]) {
+                        dateCounts[id]++;
+                        id = `${id}_${dateCounts[id]}`;
+                    } else {
+                        dateCounts[id] = 1;
+                    }
+                    return { ...book, id };
+                });
+
                 // Sort by date (descending, latest to earliest)
-                data.sort((a, b) => {
+                booksWithIds.sort((a, b) => {
                     const dateA = a.date ? new Date(a.date) : new Date(0);
                     const dateB = b.date ? new Date(b.date) : new Date(0);
                     return dateB - dateA;
                 });
 
-                // Get query parameter for single book display
+                // Get query parameter for single card view
                 const params = new URLSearchParams(window.location.search);
-                const bookId = params.get('id');
+                const id = params.get('id');
 
-                // Filter data if a specific book ID is provided
-                const booksToDisplay = bookId !== null && !isNaN(bookId) && bookId < data.length
-                    ? [data[bookId]]
-                    : data;
-
-                if (booksToDisplay.length === 0) {
-                    throw new Error('No book found for the specified ID');
+                if (id) {
+                    // Single card view
+                    const book = booksWithIds.find(b => b.id === id);
+                    if (book) {
+                        container.className = 'single-card';
+                        renderCard(book, container, true);
+                    } else {
+                        errorElement.textContent = 'Book not found';
+                    }
+                } else {
+                    // All cards view
+                    booksWithIds.forEach(book => {
+                        renderCard(book, container, false);
+                    });
                 }
-
-                booksToDisplay.forEach((book, index) => {
-                    const card = document.createElement('div');
-                    card.className = 'card';
-
-                    // Add image if available
-                    if (book.image) {
-                        const img = document.createElement('img');
-                        img.src = book.image;
-                        img.alt = book.title || 'Book image';
-                        img.onerror = () => { img.style.display = 'none'; }; // Hide broken images
-                        card.appendChild(img);
-                    }
-
-                    // Add title
-                    const title = document.createElement('h2');
-                    title.textContent = book.title || 'No Title';
-                    card.appendChild(title);
-
-                    // Add extrait field (if available) with quotes
-                    if (book.extrait) {
-                        const extrait = document.createElement('p');
-                        extrait.className = 'extrait';
-                        extrait.innerHTML = `<strong>Extrait:</strong> "${book.extrait}"`;
-                        card.appendChild(extrait);
-                    }
-
-                    // Add other fields (excluding title, image, and extrait)
-                    for (const [key, value] of Object.entries(book)) {
-                        if (key !== 'title' && key !== 'image' && key !== 'extrait' && value) {
-                            const p = document.createElement('p');
-                            p.innerHTML = `<strong>${key.charAt(0).toUpperCase() + key.slice(1)}:</strong> ${value}`;
-                            card.appendChild(p);
-                        }
-                    }
-
-                    // Add link to view only this book (only if not already viewing a single book)
-                    if (bookId === null) {
-                        const link = document.createElement('a');
-                        link.href = `?id=${data.indexOf(book)}`;
-                        link.className = 'card-link';
-                        link.textContent = 'View Details';
-                        card.appendChild(link);
-                    }
-
-                    container.appendChild(card);
-                });
             } catch (error) {
                 errorElement.textContent = `Failed to load data: ${error.message}`;
                 console.error('Error fetching data:', error);
             }
+        }
+
+        function renderCard(book, container, isSingle) {
+            const card = document.createElement('div');
+            card.className = 'card';
+
+            // Add image if available
+            if (book.image) {
+                const img = document.createElement('img');
+                img.src = book.image;
+                img.alt = book.title || 'Book image';
+                img.onerror = () => { img.style.display = 'none'; }; // Hide broken images
+                card.appendChild(img);
+            }
+
+            // Add title
+            const title = document.createElement('h2');
+            title.textContent = book.title || 'No Title';
+            card.appendChild(title);
+
+            // Add extrait field (if available) with quotes
+            if (book.extrait) {
+                const extrait = document.createElement('p');
+                extrait.className = 'extrait';
+                extrait.innerHTML = `<strong>Extrait:</strong> "${book.extrait}"`;
+                card.appendChild(extrait);
+            }
+
+            // Add other fields (excluding title, image, extrait, and id)
+            for (const [key, value] of Object.entries(book)) {
+                if (key !== 'title' && key !== 'image' && key !== 'extrait' && key !== 'id' && value) {
+                    const p = document.createElement('p');
+                    p.innerHTML = `<strong>${key.charAt(0).toUpperCase() + key.slice(1)}:</strong> ${value}`;
+                    card.appendChild(p);
+                }
+            }
+
+            // Add links (only for main view, not single card view)
+            if (!isSingle) {
+                // View Details link
+                const detailsLink = document.createElement('a');
+                detailsLink.className = 'details-link';
+                detailsLink.href = `?id=${book.id}`;
+                detailsLink.textContent = 'View Details';
+                card.appendChild(detailsLink);
+
+                // Share on X link
+                const shareXLink = document.createElement('a');
+                shareXLink.className = 'share-x-link';
+                shareXLink.href = createXPostLink(book);
+                shareXLink.textContent = 'Share on X';
+                shareXLink.target = '_blank'; // Open in new tab
+                card.appendChild(shareXLink);
+            }
+
+            container.appendChild(card);
+        }
+
+        function createXPostLink(book) {
+            // Base URL for the single-card view (replace with your actual domain)
+            const baseUrl = window.location.origin; // e.g., https://example.com
+            const cardUrl = `${baseUrl}?id=${book.id}`;
+
+            // Compose post text
+            let postText = `${book.title || 'Book'}`;
+            if (book.extrait) {
+                postText += `: "${book.extrait}"`;
+            }
+            postText += ` Read more: ${cardUrl} #TheBooks`;
+
+            // Truncate to fit within 280 characters, accounting for URL length
+            const maxTextLength = 280 - cardUrl.length - 10; // Buffer for spaces and hashtag
+            if (postText.length > maxTextLength) {
+                postText = postText.substring(0, maxTextLength - 3) + '...';
+            }
+
+            // Encode text for URL
+            const encodedText = encodeURIComponent(postText);
+            return `https://x.com/intent/post?text=${encodedText}`;
         }
 
         // Call the function when the page loads
