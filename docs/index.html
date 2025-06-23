@@ -3,8 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="twitter:card" content="summary_large_image">
     <title>The book from The Books</title>
+    <!-- Static meta tags for main page -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="The book from The Books">
+    <meta name="twitter:description" content="Explore a collection of books with excerpts and images.">
+    <meta name="twitter:image" content="https://via.placeholder.com/800x400?text=The+Books">
+    <meta property="og:title" content="The book from The Books">
+    <meta property="og:description" content="Explore a collection of books with excerpts and images.">
+    <meta property="og:image" content="https://via.placeholder.com/800x400?text=The+Books">
+    <meta property="og:url" content="https://example.com">
+    <meta property="og:type" content="website">
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -50,12 +59,9 @@
         .extrait {
             font-style: italic;
         }
-        .button-container {
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
         .details-link, .share-x-link {
             display: inline-block;
+            margin-top: 10px;
             padding: 8px 12px;
             text-decoration: none;
             border-radius: 4px;
@@ -83,6 +89,9 @@
         .single-card {
             max-width: 600px;
             margin: 0 auto;
+        }
+        .links-container {
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -136,8 +145,8 @@
                     // Single card view
                     const book = booksWithIds.find(b => b.id === id);
                     if (book) {
-                        // Add Twitter meta tags for X Card preview
-                        addTwitterMetaTags(book);
+                        // Set dynamic meta tags
+                        setSocialMetaTags(book);
                         container.className = 'single-card';
                         renderCard(book, container, true);
                     } else {
@@ -155,31 +164,36 @@
             }
         }
 
-        function addTwitterMetaTags(book) {
-            // Remove existing Twitter meta tags to avoid duplicates
-            const existingTags = document.querySelectorAll('meta[name^="twitter"]');
-            existingTags.forEach(tag => {
-                if (tag.name !== 'twitter:card') tag.remove();
-            });
+        function setSocialMetaTags(book) {
+            // Remove existing dynamic meta tags
+            const existingMetas = document.querySelectorAll('meta[data-dynamic="true"]');
+            existingMetas.forEach(meta => meta.remove());
 
-            // Add Twitter meta tags
+            // Base URL for og:url (replace with your domain)
+            const baseUrl = window.location.origin;
+            const cardUrl = `${baseUrl}?id=${book.id}`;
+
+            // Meta tags for Twitter and Open Graph
             const metaTags = [
-                { name: 'twitter:title', content: book.title || 'No Title' },
-                { name: 'twitter:description', content: book.extrait || 'A book from The Books' },
+                { name: 'twitter:card', content: 'summary_large_image' },
+                { name: 'twitter:title', content: book.title || 'Book' },
+                { name: 'twitter:description', content: book.extrait ? book.extrait.substring(0, 200) : 'View book details.' },
+                { name: 'twitter:image', content: book.image || 'https://via.placeholder.com/800x400?text=Book+Image' },
+                { property: 'og:title', content: book.title || 'Book' },
+                { property: 'og:description', content: book.extrait ? book.extrait.substring(0, 200) : 'View book details.' },
+                { property: 'og:image', content: book.image || 'https://via.placeholder.com/800x400?text=Book+Image' },
+                { property: 'og:url', content: cardUrl },
+                { property: 'og:type', content: 'article' }
             ];
-            if (book.image) {
-                metaTags.push({ name: 'twitter:image', content: book.image });
-            }
 
             metaTags.forEach(tag => {
                 const meta = document.createElement('meta');
-                meta.name = tag.name;
-                meta.content = tag.content;
+                if (tag.name) meta.setAttribute('name', tag.name);
+                if (tag.property) meta.setAttribute('property', tag.property);
+                meta.setAttribute('content', tag.content);
+                meta.setAttribute('data-dynamic', 'true');
                 document.head.appendChild(meta);
             });
-
-            // Update page title for single-card view
-            document.title = book.title || 'The book from The Books';
         }
 
         function renderCard(book, container, isSingle) {
@@ -210,15 +224,15 @@
 
             // Add links (only for main view, not single card view)
             if (!isSingle) {
-                const buttonContainer = document.createElement('div');
-                buttonContainer.className = 'button-container';
+                const linksContainer = document.createElement('div');
+                linksContainer.className = 'links-container';
 
                 // View Details link
                 const detailsLink = document.createElement('a');
                 detailsLink.className = 'details-link';
                 detailsLink.href = `?id=${book.id}`;
                 detailsLink.textContent = 'View Details';
-                buttonContainer.appendChild(detailsLink);
+                linksContainer.appendChild(detailsLink);
 
                 // Share on X link
                 const shareXLink = document.createElement('a');
@@ -226,9 +240,9 @@
                 shareXLink.href = createXPostLink(book);
                 shareXLink.textContent = 'Share on X';
                 shareXLink.target = '_blank';
-                buttonContainer.appendChild(shareXLink);
+                linksContainer.appendChild(shareXLink);
 
-                card.appendChild(buttonContainer);
+                card.appendChild(linksContainer);
             }
 
             // Add image at the bottom (if available)
@@ -245,7 +259,7 @@
 
         function createXPostLink(book) {
             // Base URL for the page (replace with your actual domain)
-            const baseUrl = window.location.origin; // e.g., https://example.com
+            const baseUrl = window.location.origin;
             const cardUrl = `${baseUrl}?id=${book.id}`;
 
             // Compose post text
@@ -260,7 +274,7 @@
             postText += ` #TheBooks`;
 
             // Truncate to fit within 280 characters
-            const maxTextLength = 280 - 10; // Buffer for spaces and hashtag
+            const maxTextLength = 280 - 10;
             if (postText.length > maxTextLength) {
                 postText = postText.substring(0, maxTextLength - 3) + '...';
             }
