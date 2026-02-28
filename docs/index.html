@@ -89,10 +89,19 @@
             display: flex;
             flex-direction: column;
             transition: 0.2s;
+            overflow: hidden; /* Ensures image corners match card radius */
+        }
+
+        /* --- ADDED IMAGE STYLING --- */
+        .book-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 1px solid var(--border);
         }
 
         .extract-header {
-            padding: 2.5rem 2rem 1.5rem;
+            padding: 1.5rem 2rem;
             font-family: 'Georgia', serif;
             font-style: italic;
             font-size: 1.1rem;
@@ -100,26 +109,23 @@
             color: #334155;
             position: relative;
             display: -webkit-box;
-            -webkit-line-clamp: 6;
+            -webkit-line-clamp: 4; /* Reduced clamp to fit image better */
             -webkit-box-orient: vertical;
             overflow: hidden;
             background: #fafafa;
-            border-radius: 16px 16px 0 0;
         }
 
         .extract-header::before {
             content: '“';
             position: absolute;
             top: 5px;
-            left: 15px;
-            font-size: 4rem;
+            left: 10px;
+            font-size: 3rem;
             color: #e2e8f0;
         }
 
         .book-info { padding: 1.5rem; border-top: 1px solid #f1f5f9; }
-
         .book-title { font-size: 1.2rem; font-weight: 800; margin: 0 0 0.4rem; }
-
         .book-meta { font-size: 0.85rem; color: #64748b; }
 
         .error-msg {
@@ -154,7 +160,6 @@
 
     <script>
         const API_URL = 'https://static-conf.vercel.app/go/books';
-        // If the above fails, you can try: 'https://cors-anywhere.herokuapp.com/' + API_URL
         
         let books = [];
         let sortAsc = true;
@@ -165,8 +170,6 @@
                 if (!res.ok) throw new Error("Failed to reach the server.");
                 
                 const data = await res.json();
-                
-                // Robust check: Is it an array or an object containing an array?
                 books = Array.isArray(data) ? data : (data.books || data.data || []);
                 
                 renderUI();
@@ -194,15 +197,21 @@
 
         function renderBooks(data) {
             const grid = document.getElementById('book-grid');
-            grid.innerHTML = data.map(b => `
+            grid.innerHTML = data.map(b => {
+                // Fallback image if b.image is missing
+                const imageUrl = b.image || `https://images.unsplash.com/photo-1543005187-a19137d1f190?w=500&q=80`;
+                
+                return `
                 <div class="book-card">
+                    <img src="${imageUrl}" alt="${b.title}" class="book-image">
+                    
                     <div class="extract-header">${b.extrait || b.extract || "No excerpt available."}</div>
                     <div class="book-info">
                         <h2 class="book-title">${b.title || 'Untitled'}</h2>
                         <div class="book-meta">By ${b.author || 'Unknown'} • ${b.date || ''}</div>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         function filter(name) {
