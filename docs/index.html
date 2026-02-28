@@ -3,290 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The book from The Books</title>
-    <!-- Static meta tags for main page -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="The book from The Books">
-    <meta name="twitter:description" content="Explore a collection of books with excerpts and images.">
-    <meta name="twitter:image" content="https://via.placeholder.com/800x400?text=The+Books">
-    <meta property="og:title" content="The book from The Books">
-    <meta property="og:description" content="Explore a collection of books with excerpts and images.">
-    <meta property="og:image" content="https://via.placeholder.com/800x400?text=The+Books">
-    <meta property="og:url" content="https://example.com">
-    <meta property="og:type" content="website">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3494583990084128" crossorigin="anonymous"></script>
+    <title>Book Explorer</title>
     <style>
+        :root {
+            --sidebar-width: 260px;
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --border: #e2e8f0;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f4f4f4;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            background-color: var(--bg);
+            color: #1e293b;
         }
-        h1 {
-            text-align: center;
-            color: #333;
+
+        /* Sidebar Styling */
+        aside {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        .card-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-size: 0.85rem;
+            color: #64748b;
         }
-        .card {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            transition: transform 0.2s;
+
+        #author-list {
+            flex: 1;
+            overflow-y: auto;
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
-        .card:hover {
-            transform: translateY(-5px);
+
+        .author-item {
+            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.2s;
         }
-        .card h2 {
-            margin: 0 0 10px;
-            font-size: 1.5em;
-            color: #2c3e50;
+
+        .author-item:hover {
+            background: #f1f5f9;
+            color: var(--primary);
         }
-        .card p {
-            margin: 5px 0;
-            color: #555;
+
+        /* Main Content Styling */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        .card img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-            margin-top: 10px;
+
+        .search-container {
+            padding: 1.5rem 2rem;
+            background: white;
+            border-bottom: 1px solid var(--border);
         }
-        .extrait {
-            font-style: italic;
-        }
-        .details-link, .share-x-link {
-            display: inline-block;
-            margin-top: 10px;
-            padding: 8px 12px;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 0.9em;
-            margin-right: 10px;
-        }
-        .details-link {
-            background-color: #2c3e50;
-            color: white;
-        }
-        .details-link:hover {
-            background-color: #34495e;
-        }
-        .share-x-link {
-            background-color: #1DA1F2;
-            color: white;
-        }
-        .share-x-link:hover {
-            background-color: #1a91da;
-        }
-        .error {
-            color: red;
-            text-align: center;
-        }
-        .single-card {
+
+        #search-input {
+            width: 100%;
             max-width: 600px;
-            margin: 0 auto;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
         }
-        .links-container {
-            margin-top: 10px;
+
+        #search-input:focus {
+            border-color: var(--primary);
+        }
+
+        /* Grid Layout */
+        #book-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+            overflow-y: auto;
+            align-content: start;
+        }
+
+        .book-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .book-title {
+            display: block;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #0f172a;
+        }
+
+        .book-author {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        .loading {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 3rem;
+            color: #94a3b8;
         }
     </style>
 </head>
 <body>
-    <h1>The book from The Books</h1>
-    <div id="card-container" class="card-container"></div>
-    <p id="error" class="error"></p>
+
+    <aside>
+        <div class="sidebar-header">Authors</div>
+        <ul id="author-list">
+            <li class="author-item">Loading authors...</li>
+        </ul>
+    </aside>
+
+    <main>
+        <div class="search-container">
+            <input type="text" id="search-input" placeholder="Search by title or author name...">
+        </div>
+        <div id="book-grid">
+            <div class="loading">Loading library...</div>
+        </div>
+    </main>
 
     <script>
-        async function fetchBooks() {
-            const url = 'https://raw.githubusercontent.com/yblebon/datasources/main/thebook.json';
-            const container = document.getElementById('card-container');
-            const errorElement = document.getElementById('error');
+        const API_URL = 'https://static-conf.vercel.app/go/books';
+        let allBooks = [];
 
+        const bookGrid = document.getElementById('book-grid');
+        const authorList = document.getElementById('author-list');
+        const searchInput = document.getElementById('search-input');
+
+        async function init() {
             try {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-
-                if (!Array.isArray(data)) {
-                    throw new Error('Data is not an array');
-                }
-
-                // Generate unique IDs based on date
-                const dateCounts = {};
-                const booksWithIds = data.map(book => {
-                    let id = book.date ? book.date.replace(/[^a-zA-Z0-9]/g, '') : 'nodate';
-                    if (dateCounts[id]) {
-                        dateCounts[id]++;
-                        id = `${id}_${dateCounts[id]}`;
-                    } else {
-                        dateCounts[id] = 1;
-                    }
-                    return { ...book, id };
-                });
-
-                // Sort by date (descending, latest to earliest)
-                booksWithIds.sort((a, b) => {
-                    const dateA = a.date ? new Date(a.date) : new Date(0);
-                    const dateB = b.date ? new Date(b.date) : new Date(0);
-                    return dateB - dateA;
-                });
-
-                // Get query parameter for single card view
-                const params = new URLSearchParams(window.location.search);
-                const id = params.get('id');
-
-                if (id) {
-                    // Single card view
-                    const book = booksWithIds.find(b => b.id === id);
-                    if (book) {
-                        // Set dynamic meta tags
-                        setSocialMetaTags(book);
-                        container.className = 'single-card';
-                        renderCard(book, container, true);
-                    } else {
-                        errorElement.textContent = 'Book not found';
-                    }
-                } else {
-                    // All cards view
-                    booksWithIds.forEach(book => {
-                        renderCard(book, container, false);
-                    });
-                }
-            } catch (error) {
-                errorElement.textContent = `Failed to load data: ${error.message}`;
-                console.error('Error fetching data:', error);
+                const response = await fetch(API_URL);
+                allBooks = await response.json();
+                
+                renderAuthors();
+                renderBooks(allBooks);
+            } catch (err) {
+                bookGrid.innerHTML = `<div class="loading">Error loading data. Please check CORS settings.</div>`;
             }
         }
 
-        function setSocialMetaTags(book) {
-            // Remove existing dynamic meta tags
-            const existingMetas = document.querySelectorAll('meta[data-dynamic="true"]');
-            existingMetas.forEach(meta => meta.remove());
-
-            // Base URL for og:url (replace with your domain)
-            const baseUrl = window.location.origin;
-            const cardUrl = `${baseUrl}?id=${book.id}`;
-
-            // Meta tags for Twitter and Open Graph
-            const metaTags = [
-                { name: 'twitter:card', content: 'summary_large_image' },
-                { name: 'twitter:title', content: book.title || 'Book' },
-                { name: 'twitter:description', content: book.extrait ? book.extrait.substring(0, 200) : 'View book details.' },
-                { name: 'twitter:image', content: book.image || 'https://via.placeholder.com/800x400?text=Book+Image' },
-                { property: 'og:title', content: book.title || 'Book' },
-                { property: 'og:description', content: book.extrait ? book.extrait.substring(0, 200) : 'View book details.' },
-                { property: 'og:image', content: book.image || 'https://via.placeholder.com/800x400?text=Book+Image' },
-                { property: 'og:url', content: cardUrl },
-                { property: 'og:type', content: 'article' }
-            ];
-
-            metaTags.forEach(tag => {
-                const meta = document.createElement('meta');
-                if (tag.name) meta.setAttribute('name', tag.name);
-                if (tag.property) meta.setAttribute('property', tag.property);
-                meta.setAttribute('content', tag.content);
-                meta.setAttribute('data-dynamic', 'true');
-                document.head.appendChild(meta);
-            });
+        function renderAuthors() {
+            // Get unique authors and sort them alphabetically
+            const authors = [...new Set(allBooks.map(b => b.author || 'Unknown'))].sort();
+            
+            authorList.innerHTML = authors.map(author => `
+                <li class="author-item" onclick="filterByAuthor('${author}')">${author}</li>
+            `).join('');
         }
 
-        function renderCard(book, container, isSingle) {
-            const card = document.createElement('div');
-            card.className = 'card';
-
-            // Add title
-            const title = document.createElement('h2');
-            title.textContent = book.title || 'No Title';
-            card.appendChild(title);
-
-            // Add extrait field (if available) with quotes
-            if (book.extrait) {
-                const extrait = document.createElement('p');
-                extrait.className = 'extrait';
-                extrait.innerHTML = `<strong>Extrait:</strong> "${book.extrait}"`;
-                card.appendChild(extrait);
+        function renderBooks(books) {
+            if (books.length === 0) {
+                bookGrid.innerHTML = `<div class="loading">No books found matching your search.</div>`;
+                return;
             }
 
-            // Add other fields (excluding title, image, extrait, and id)
-            for (const [key, value] of Object.entries(book)) {
-                if (key !== 'title' && key !== 'image' && key !== 'extrait' && key !== 'id' && value) {
-                    const p = document.createElement('p');
-                    p.innerHTML = `<strong>${key.charAt(0).toUpperCase() + key.slice(1)}:</strong> ${value}`;
-                    card.appendChild(p);
-                }
-            }
-
-            // Add links (only for main view, not single card view)
-            if (!isSingle) {
-                const linksContainer = document.createElement('div');
-                linksContainer.className = 'links-container';
-
-                // View Details link
-                const detailsLink = document.createElement('a');
-                detailsLink.className = 'details-link';
-                detailsLink.href = `?id=${book.id}`;
-                detailsLink.textContent = 'View Details';
-                linksContainer.appendChild(detailsLink);
-
-                // Share on X link
-                const shareXLink = document.createElement('a');
-                shareXLink.className = 'share-x-link';
-                shareXLink.href = createXPostLink(book);
-                shareXLink.textContent = 'Share on X';
-                shareXLink.target = '_blank';
-                linksContainer.appendChild(shareXLink);
-
-                card.appendChild(linksContainer);
-            }
-
-            // Add image at the bottom (if available)
-            if (book.image) {
-                const img = document.createElement('img');
-                img.src = book.image;
-                img.alt = book.title || 'Book image';
-                img.onerror = () => { img.style.display = 'none'; };
-                card.appendChild(img);
-            }
-
-            container.appendChild(card);
+            bookGrid.innerHTML = books.map(book => `
+                <div class="book-card">
+                    <span class="book-title">${book.title}</span>
+                    <span class="book-author">${book.author}</span>
+                </div>
+            `).join('');
         }
 
-        function createXPostLink(book) {
-            // Base URL for the page (replace with your actual domain)
-            const baseUrl = window.location.origin;
-            const cardUrl = `${baseUrl}?id=${book.id}`;
-
-            // Compose post text
-            let postText = `${book.title || 'Book'}`;
-            if (book.extrait) {
-                postText += `: "${book.extrait}"`;
-            }
-            postText += ` Read more: ${cardUrl}`;
-            if (book.image) {
-                postText += ` Image: ${book.image}`;
-            }
-            postText += ` #TheBooks`;
-
-            // Truncate to fit within 280 characters
-            const maxTextLength = 280 - 10;
-            if (postText.length > maxTextLength) {
-                postText = postText.substring(0, maxTextLength - 3) + '...';
-            }
-
-            // Encode text for URL
-            const encodedText = encodeURIComponent(postText);
-            return `https://x.com/intent/post?text=${encodedText}`;
+        function handleSearch() {
+            const query = searchInput.value.toLowerCase();
+            const filtered = allBooks.filter(book => 
+                book.title.toLowerCase().includes(query) || 
+                book.author.toLowerCase().includes(query)
+            );
+            renderBooks(filtered);
         }
 
-        // Call the function when the page loads
-        window.onload = fetchBooks;
+        function filterByAuthor(authorName) {
+            searchInput.value = authorName;
+            handleSearch();
+        }
+
+        searchInput.addEventListener('input', handleSearch);
+
+        init();
     </script>
 </body>
 </html>
