@@ -3,42 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Explorer</title>
+    <title>The Reading Room</title>
     <style>
         :root {
-            --sidebar-width: 260px;
-            --primary: #2563eb;
+            --sidebar-width: 280px;
+            --accent: #2563eb;
             --bg: #f8fafc;
             --border: #e2e8f0;
+            --text-main: #0f172a;
         }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             margin: 0;
             display: flex;
             height: 100vh;
             background-color: var(--bg);
-            color: #1e293b;
+            color: var(--text-main);
         }
 
-        /* Sidebar Styling */
+        /* Sidebar */
         aside {
             width: var(--sidebar-width);
             background: white;
             border-right: 1px solid var(--border);
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            z-index: 10;
         }
 
         .sidebar-header {
             padding: 1.5rem;
             border-bottom: 1px solid var(--border);
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-size: 0.85rem;
-            color: #64748b;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         #author-list {
@@ -50,163 +49,179 @@
         }
 
         .author-item {
-            padding: 0.75rem 1.5rem;
+            padding: 0.9rem 1.5rem;
             border-bottom: 1px solid #f1f5f9;
             cursor: pointer;
             font-size: 0.9rem;
-            transition: background 0.2s;
+            transition: 0.2s;
         }
 
-        .author-item:hover {
-            background: #f1f5f9;
-            color: var(--primary);
-        }
+        .author-item:hover { background: #f1f5f9; color: var(--accent); }
 
-        /* Main Content Styling */
-        main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
+        /* Main Content */
+        main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 
-        .search-container {
-            padding: 1.5rem 2rem;
-            background: white;
-            border-bottom: 1px solid var(--border);
-        }
+        .top-bar { padding: 1.5rem 2.5rem; background: white; border-bottom: 1px solid var(--border); }
 
         #search-input {
             width: 100%;
             max-width: 600px;
-            padding: 0.75rem 1rem;
+            padding: 0.8rem 1.2rem;
             border: 2px solid var(--border);
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 12px;
             outline: none;
-            transition: border-color 0.2s;
         }
 
-        #search-input:focus {
-            border-color: var(--primary);
-        }
-
-        /* Grid Layout */
         #book-grid {
             flex: 1;
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 1.5rem;
-            padding: 2rem;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+            padding: 2.5rem;
             overflow-y: auto;
-            align-content: start;
         }
 
+        /* The Extract Layout */
         .book-card {
             background: white;
-            padding: 1.5rem;
-            border-radius: 12px;
+            border-radius: 16px;
             border: 1px solid var(--border);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            transition: 0.2s;
         }
 
-        .book-title {
-            display: block;
-            font-weight: 600;
+        .extract-header {
+            padding: 2.5rem 2rem 1.5rem;
+            font-family: 'Georgia', serif;
+            font-style: italic;
             font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-            color: #0f172a;
+            line-height: 1.6;
+            color: #334155;
+            position: relative;
+            display: -webkit-box;
+            -webkit-line-clamp: 6;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            background: #fafafa;
+            border-radius: 16px 16px 0 0;
         }
 
-        .book-author {
-            font-size: 0.9rem;
-            color: #64748b;
+        .extract-header::before {
+            content: '“';
+            position: absolute;
+            top: 5px;
+            left: 15px;
+            font-size: 4rem;
+            color: #e2e8f0;
         }
 
-        .loading {
+        .book-info { padding: 1.5rem; border-top: 1px solid #f1f5f9; }
+
+        .book-title { font-size: 1.2rem; font-weight: 800; margin: 0 0 0.4rem; }
+
+        .book-meta { font-size: 0.85rem; color: #64748b; }
+
+        .error-msg {
             grid-column: 1 / -1;
             text-align: center;
             padding: 3rem;
-            color: #94a3b8;
+            background: #fee2e2;
+            color: #b91c1c;
+            border-radius: 12px;
+            margin: 2rem;
         }
     </style>
 </head>
 <body>
 
     <aside>
-        <div class="sidebar-header">Authors</div>
-        <ul id="author-list">
-            <li class="author-item">Loading authors...</li>
-        </ul>
+        <div class="sidebar-header">
+            <strong style="font-size: 0.8rem; text-transform: uppercase; color: #64748b;">Authors</strong>
+            <button id="sort-btn" style="cursor:pointer; font-size: 10px;">Sort A-Z</button>
+        </div>
+        <ul id="author-list"></ul>
     </aside>
 
     <main>
-        <div class="search-container">
-            <input type="text" id="search-input" placeholder="Search by title or author name...">
+        <div class="top-bar">
+            <input type="text" id="search-input" placeholder="Search by title, author, or content...">
         </div>
         <div id="book-grid">
-            <div class="loading">Loading library...</div>
+            <div style="grid-column: 1/-1; text-align:center; padding-top: 50px;">Connecting to library...</div>
         </div>
     </main>
 
     <script>
         const API_URL = 'https://static-conf.vercel.app/go/books';
-        let allBooks = [];
-
-        const bookGrid = document.getElementById('book-grid');
-        const authorList = document.getElementById('author-list');
-        const searchInput = document.getElementById('search-input');
+        // If the above fails, you can try: 'https://cors-anywhere.herokuapp.com/' + API_URL
+        
+        let books = [];
+        let sortAsc = true;
 
         async function init() {
             try {
-                const response = await fetch(API_URL);
-                allBooks = await response.json();
+                const res = await fetch(API_URL);
+                if (!res.ok) throw new Error("Failed to reach the server.");
                 
-                renderAuthors();
-                renderBooks(allBooks);
-            } catch (err) {
-                bookGrid.innerHTML = `<div class="loading">Error loading data. Please check CORS settings.</div>`;
+                const data = await res.json();
+                
+                // Robust check: Is it an array or an object containing an array?
+                books = Array.isArray(data) ? data : (data.books || data.data || []);
+                
+                renderUI();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('book-grid').innerHTML = `
+                    <div class="error-msg">
+                        <strong>Data Load Error</strong><br>
+                        ${e.message}<br><br>
+                        <small>Check the browser console (F12) for CORS errors.</small>
+                    </div>`;
             }
+        }
+
+        function renderUI() {
+            renderAuthors();
+            renderBooks(books);
         }
 
         function renderAuthors() {
-            // Get unique authors and sort them alphabetically
-            const authors = [...new Set(allBooks.map(b => b.author || 'Unknown'))].sort();
-            
-            authorList.innerHTML = authors.map(author => `
-                <li class="author-item" onclick="filterByAuthor('${author}')">${author}</li>
-            `).join('');
+            const unique = [...new Set(books.map(b => b.author).filter(Boolean))];
+            unique.sort((a, b) => sortAsc ? a.localeCompare(b) : b.localeCompare(a));
+            document.getElementById('author-list').innerHTML = unique.map(a => `<li class="author-item" onclick="filter('${a}')">${a}</li>`).join('');
         }
 
-        function renderBooks(books) {
-            if (books.length === 0) {
-                bookGrid.innerHTML = `<div class="loading">No books found matching your search.</div>`;
-                return;
-            }
-
-            bookGrid.innerHTML = books.map(book => `
+        function renderBooks(data) {
+            const grid = document.getElementById('book-grid');
+            grid.innerHTML = data.map(b => `
                 <div class="book-card">
-                    <span class="book-title">${book.title}</span>
-                    <span class="book-author">${book.author}</span>
+                    <div class="extract-header">${b.extrait || b.extract || "No excerpt available."}</div>
+                    <div class="book-info">
+                        <h2 class="book-title">${b.title || 'Untitled'}</h2>
+                        <div class="book-meta">By ${b.author || 'Unknown'} • ${b.date || ''}</div>
+                    </div>
                 </div>
             `).join('');
         }
 
+        function filter(name) {
+            document.getElementById('search-input').value = name;
+            handleSearch();
+        }
+
         function handleSearch() {
-            const query = searchInput.value.toLowerCase();
-            const filtered = allBooks.filter(book => 
-                book.title.toLowerCase().includes(query) || 
-                book.author.toLowerCase().includes(query)
+            const q = document.getElementById('search-input').value.toLowerCase();
+            const filtered = books.filter(b => 
+                (b.title?.toLowerCase().includes(q)) || 
+                (b.author?.toLowerCase().includes(q)) || 
+                ((b.extrait || b.extract)?.toLowerCase().includes(q))
             );
             renderBooks(filtered);
         }
 
-        function filterByAuthor(authorName) {
-            searchInput.value = authorName;
-            handleSearch();
-        }
-
-        searchInput.addEventListener('input', handleSearch);
+        document.getElementById('search-input').addEventListener('input', handleSearch);
+        document.getElementById('sort-btn').addEventListener('click', () => { sortAsc = !sortAsc; renderAuthors(); });
 
         init();
     </script>
